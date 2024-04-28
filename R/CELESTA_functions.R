@@ -1654,7 +1654,7 @@ AssignCellTypes <- function(initial_pri_matrix,
                             low_marker_threshold,
                             min_difference = 0,
                             min_prob = 0) {
-  cell_prob_list <- current_cell_prob[, cell_type_num]
+  cell_prob_list <- current_cell_prob[, cell_type_num, drop = FALSE]
   cell_type_assignment <- current_cell_type_assignment[, round]
   
   if(length(unassigned_cells)<2){
