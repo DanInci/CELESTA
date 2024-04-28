@@ -1,0 +1,90 @@
+---
+title: CELESTA
+output:
+  pdf_document: default
+  html_document: default
+params:
+  # IMMUcan_2022_CancerExample, HochSchulz_2022_Melanoma
+  experiment_dir: '/home/dani/Documents/Thesis/Methods/IMCBenchmark/output/IMMUcan_2022_CancerExample/celesta/counts'
+  n_workers: !r min(BiocParallel::multicoreWorkers(), 32)
+  seed: 220619
+---
+
+```{r knitr_options}
+knitr :: opts_chunk$set(fig.width=12, fig.height=8, warning=FALSE, message=FALSE)
+
+SEED = params$seed
+set.seed(SEED)
+
+EXPERIMENT_DIR = params$experiment_dir
+N_WORKERS = params$n_workers
+```
+
+## 1. Load Data & Libraries
+
+```{r message = FALSE, warning = FALSE}
+library(caret)
+library(tidyverse)
+library(jsonlite)
+library(foreach)
+library(parallel)
+library(doParallel)
+library(dplyr)
+
+source('r/CELESTA_functions.R')
+source('r/CELESTA_functions_extra.R')
+
+ExperimentConfigFile <- paste0(EXPERIMENT_DIR, '/config.json')
+  if (!file.exists(ExperimentConfigFile)) {
+    stop(paste0('Expected not properly setup. Expected ', ExperimentDir, ' to contain a `config.json` file.'))
+  }
+  
+ExperimentConfig <- fromJSON(ExperimentConfigFile)
+
+# Load dataset
+dataset <- as.data.frame(read_csv(ExperimentConfig$dataset_path))
+rownames(dataset) <- dataset$...1
+dataset <- dataset[, -1]
+dataset$cell_id <- rownames(dataset)
+unique_cell_types <- unique(dataset$cell_type)
+no_labels <- length(unique_cell_types)
+
+# Load Signature Matrix
+signature_matrix <- as.data.frame(read_csv(ExperimentConfig$signature_matrix_path))
+rownames(signature_matrix) <- signature_matrix$...1
+signature_matrix <- signature_matrix[, -1]
+
+dataset_name <- gsub("\\.csv$", "", basename(ExperimentConfig$dataset_path))
+print(paste0('Run CELESTA for dataset ', dataset_name, ' ...'))
+```
+
+## 2. Run CELESTA
+
+```{r message = FALSE, warning = FALSE}
+cluster <- makeCluster(N_WORKERS)
+registerDoParallel(cluster)
+
+# Run CELESTA for each image in the dataset
+results <- foreach(image_id = unique(dataset$image_name)) %do% {
+    run_celesta_for_image(ExperimentConfig, EXPERIMENT_DIR, dataset, signature_matrix, image_id, no_labels)
+}
+results <- bind_rows(results)
+
+stopCluster(cluster)
+```
+
+## 3. Assess performance
+
+```{r message = FALSE, warning = FALSE}
+# Assess model performance
+performance <- confusionMatrix(factor(results$pred, levels=sort(unique_cell_types)), factor(results$label, levels=sort(unique_cell_types)))
+  
+performance
+```
+
+## 4. Save results
+
+```{r message = FALSE, warning = FALSE}
+# Write aggregated results
+write.csv(results, paste0(EXPERIMENT_DIR, "/", dataset_name, "_results.csv"), row.names = FALSE)
+```
