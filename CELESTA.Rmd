@@ -31,8 +31,8 @@ library(parallel)
 library(doParallel)
 library(dplyr)
 
-source('r/CELESTA_functions.R')
-source('r/CELESTA_functions_extra.R')
+source('R/CELESTA_functions.R')
+source('R/CELESTA_functions_extra.R')
 
 ExperimentConfigFile <- paste0(EXPERIMENT_DIR, '/config.json')
   if (!file.exists(ExperimentConfigFile)) {
