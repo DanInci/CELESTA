@@ -5,7 +5,7 @@ output:
   html_document: default
 params:
   # IMMUcan_2022_CancerExample, HochSchulz_2022_Melanoma
-  experiment_dir: '/home/dani/Documents/Thesis/Methods/IMCBenchmark/output/IMMUcan_2022_CancerExample/celesta/counts'
+  experiment_dir: '/home/dani/Documents/Thesis/Methods/IMCBenchmark/output/IMMUcan_2022_CancerExample/celesta/exprs'
   n_workers: !r min(BiocParallel::multicoreWorkers(), 32)
   seed: 220619
 ---
@@ -45,7 +45,7 @@ ExperimentConfig <- fromJSON(ExperimentConfigFile)
 dataset <- as.data.frame(read_csv(ExperimentConfig$dataset_path))
 rownames(dataset) <- dataset$...1
 dataset <- dataset[, -1]
-dataset$cell_id <- rownames(dataset)
+
 unique_cell_types <- unique(dataset$cell_type)
 no_labels <- length(unique_cell_types)
 
@@ -86,5 +86,5 @@ performance
 
 ```{r message = FALSE, warning = FALSE}
 # Write aggregated results
-write.csv(results, paste0(EXPERIMENT_DIR, "/", dataset_name, "_results.csv"), row.names = FALSE)
+write.csv(results, paste0(EXPERIMENT_DIR, "/celesta_results.csv"), row.names = FALSE)
 ```

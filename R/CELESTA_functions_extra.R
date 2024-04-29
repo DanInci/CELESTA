@@ -32,7 +32,7 @@ run_celesta_for_image <- function(ExperimentConfig, ExperimentDir, dataset, sign
   
   ### Assign cell types. 
   CelestaObj <- AssignCells(
-    CelestaObj, max_iteration=1, cell_change_threshold=ExperimentConfig$cell_change_threshold, save_result = FALSE
+    CelestaObj, max_iteration=ExperimentConfig$max_iteration, cell_change_threshold=ExperimentConfig$cell_change_threshold, save_result = FALSE
   )
   
   results$pred <- CelestaObj@final_cell_type_assignment[, (CelestaObj@total_rounds+2)]
