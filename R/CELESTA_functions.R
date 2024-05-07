@@ -1580,7 +1580,7 @@ CalculateScores <- function(marker_exp_prob,
     current_scoring_matrix[unassigned_cells, cell_type_num] <- x/sum(x)
   }else{
     current_scoring_matrix[unassigned_cells, cell_type_num] <- t(apply(
-      current_scoring_matrix[unassigned_cells, cell_type_num],
+      current_scoring_matrix[unassigned_cells, cell_type_num, drop = FALSE],
       1, function(x) x / sum(x)
     ))
   }
@@ -1667,8 +1667,8 @@ AssignCellTypes <- function(initial_pri_matrix,
       unassigned_cells
     )
   }else{
-    max.prob_index <- apply(cell_prob_list[unassigned_cells, ], 1, which.max)
-    max.prob <- apply(cell_prob_list[unassigned_cells, ], 1, max)
+    max.prob_index <- apply(cell_prob_list[unassigned_cells, , drop = FALSE], 1, which.max)
+    max.prob <- apply(cell_prob_list[unassigned_cells, , drop = FALSE], 1, max)
     min_prob_diff <- CalculateProbabilityDifference(
       max.prob,
       max.prob_index,
@@ -1900,7 +1900,7 @@ CalculateIndexCellProb <- function(current_cell_prob,
                                    round) {
   # This function uses mean field estimation to calculate the probability
   # For each cell, a probability is calculated for each cell type to check
-  current_cell_prob_list <- current_cell_prob[, cell_type_num]
+  current_cell_prob_list <- current_cell_prob[, cell_type_num, drop = FALSE]
 
   # all cells * cell_type_num
   u <- current_cell_prob_list
