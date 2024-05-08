@@ -35,9 +35,9 @@ source('R/CELESTA_functions.R')
 source('R/CELESTA_functions_extra.R')
 
 ExperimentConfigFile <- paste0(EXPERIMENT_DIR, '/config.json')
-  if (!file.exists(ExperimentConfigFile)) {
-    stop(paste0('Expected not properly setup. Expected ', ExperimentDir, ' to contain a `config.json` file.'))
-  }
+if (!file.exists(ExperimentConfigFile)) {
+  stop(paste0('Expected not properly setup. Expected ', EXPERIMENT_DIR, ' to contain a `config.json` file.'))
+}
   
 ExperimentConfig <- fromJSON(ExperimentConfigFile)
 
@@ -46,13 +46,13 @@ dataset <- as.data.frame(read_csv(ExperimentConfig$dataset_path))
 rownames(dataset) <- dataset$...1
 dataset <- dataset[, -1]
 
-unique_cell_types <- unique(dataset$cell_type)
-no_labels <- length(unique_cell_types)
-
 # Load Signature Matrix
 signature_matrix <- as.data.frame(read_csv(ExperimentConfig$signature_matrix_path))
 rownames(signature_matrix) <- signature_matrix$...1
 signature_matrix <- signature_matrix[, -1]
+
+unique_cell_types <- signature_matrix$cell_types
+no_labels <- length(unique_cell_types)
 
 dataset_name <- gsub("\\.csv$", "", basename(ExperimentConfig$dataset_path))
 print(paste0('Run CELESTA for dataset ', dataset_name, ' ...'))
@@ -70,6 +70,9 @@ results <- foreach(image_id = unique(dataset$image_name)) %do% {
 }
 results <- bind_rows(results)
 
+# TEMP to aggregate Tumor#[1..5] under one single Tumor label for HochSchulz dataset
+results$pred <- gsub("Tumor#[0-9]+", "Tumor", results$pred) 
+
 stopCluster(cluster)
 ```
 
@@ -77,7 +80,8 @@ stopCluster(cluster)
 
 ```{r message = FALSE, warning = FALSE}
 # Assess model performance
-performance <- confusionMatrix(factor(results$pred, levels=sort(unique_cell_types)), factor(results$label, levels=sort(unique_cell_types)))
+levels = sort(unique(c(unique(results$pred), unique(results$label))))
+performance <- confusionMatrix(factor(results$pred, levels=levels), factor(results$label, levels=levels))
   
 performance
 ```
